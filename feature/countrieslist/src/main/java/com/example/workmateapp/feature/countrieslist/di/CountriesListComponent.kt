@@ -1,7 +1,7 @@
 package com.example.workmateapp.feature.countrieslist.di
 
 import com.example.workmateapp.domain.di.DomainComponent
-import com.example.workmateapp.feature.countrieslist.ui.CountriesListViewModel
+import com.example.workmateapp.feature.countrieslist.ui.CountriesListViewModelFactory
 import dagger.Component
 
 @Component(
@@ -9,6 +9,6 @@ import dagger.Component
     dependencies = [DomainComponent::class]
 )
 interface CountriesListComponent {
-    fun countriesListViewModel(): CountriesListViewModel
+    fun countriesListViewModelFactory(): CountriesListViewModelFactory
 }
 

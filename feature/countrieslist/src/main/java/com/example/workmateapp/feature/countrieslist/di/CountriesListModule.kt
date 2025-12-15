@@ -1,7 +1,7 @@
 package com.example.workmateapp.feature.countrieslist.di
 
 import com.example.workmateapp.domain.usecase.GetCountriesListUseCase
-import com.example.workmateapp.feature.countrieslist.ui.CountriesListViewModel
+import com.example.workmateapp.feature.countrieslist.ui.CountriesListViewModelFactory
 import dagger.Module
 import dagger.Provides
 
@@ -9,10 +9,10 @@ import dagger.Provides
 class CountriesListModule {
     
     @Provides
-    fun provideCountriesListViewModel(
+    fun provideCountriesListViewModelFactory(
         getCountriesListUseCase: GetCountriesListUseCase
-    ): CountriesListViewModel {
-        return CountriesListViewModel(getCountriesListUseCase)
+    ): CountriesListViewModelFactory {
+        return CountriesListViewModelFactory(getCountriesListUseCase)
     }
 }
 

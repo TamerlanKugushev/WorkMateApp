@@ -16,6 +16,15 @@ interface CountryDao {
     @Query("SELECT * FROM countries ORDER BY name")
     fun getAllCountries(): Flow<List<CountryEntity>>
     
+    @Query("SELECT * FROM countries ORDER BY name LIMIT :limit OFFSET :offset")
+    suspend fun getCountriesPaged(limit: Int, offset: Int): List<CountryEntity>
+    
+    @Query("SELECT COUNT(*) FROM countries")
+    suspend fun getCountriesCount(): Int
+    
+    @Query("SELECT * FROM countries ORDER BY name")
+    suspend fun getAllCountriesOnce(): List<CountryEntity>
+    
     @Query("SELECT * FROM countries WHERE name = :name LIMIT 1")
     fun getCountryByName(name: String): Flow<CountryEntity?>
     

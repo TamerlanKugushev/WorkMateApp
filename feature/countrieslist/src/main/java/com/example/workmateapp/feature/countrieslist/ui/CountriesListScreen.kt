@@ -3,7 +3,6 @@ package com.example.workmateapp.feature.countrieslist.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -13,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.example.workmateapp.common.Result
 import com.example.workmateapp.core.ui.components.AppTopAppBar
@@ -26,6 +27,7 @@ fun CountriesListScreen(
     onCountryClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val countries = viewModel.countriesPagingFlow.collectAsLazyPagingItems()
     
     Column(modifier = Modifier.fillMaxSize()) {
         AppTopAppBar(
@@ -33,28 +35,106 @@ fun CountriesListScreen(
             showBackButton = false
         )
         
-        when (val result = uiState.result) {
-            is Result.Loading -> LoadingView()
-            is Result.Success -> {
-                if (result.data.isEmpty()) {
-                    EmptyView()
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(result.data) { country ->
-                            CountryItem(
-                                country = country,
-                                onClick = { onCountryClick(country.name) }
-                            )
+        // Show loading only on initial load when there's no cache
+        when {
+            // Initial loading state (no cache)
+            uiState.result is Result.Loading && !uiState.hasCache -> {
+                LoadingView()
+            }
+            // Error state (no cache available)
+            uiState.result is Result.Error && !uiState.hasCache -> {
+                ErrorView(
+                    message = (uiState.result as Result.Error).exception.message ?: "Ошибка"
+                )
+            }
+            // Show paging content
+            else -> {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when (countries.loadState.refresh) {
+                        is LoadState.Loading -> {
+                            if (countries.itemCount == 0 && !uiState.hasCache) {
+                                LoadingView()
+                            }
                         }
+                        is LoadState.Error -> {
+                            if (countries.itemCount == 0) {
+                                val error = (countries.loadState.refresh as LoadState.Error).error
+                                ErrorView(message = error.message ?: "Ошибка загрузки")
+                            }
+                        }
+                        is LoadState.NotLoading -> {
+                            if (countries.itemCount == 0) {
+                                EmptyView()
+                            }
+                        }
+                    }
+                    
+                    if (countries.itemCount > 0) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(
+                                count = countries.itemCount,
+                                key = { index -> countries[index]?.name ?: index }
+                            ) { index ->
+                                countries[index]?.let { country ->
+                                    CountryItem(
+                                        country = country,
+                                        onClick = { onCountryClick(country.name) }
+                                    )
+                                }
+                            }
+                            
+                            // Loading indicator at the bottom when loading more
+                            when (countries.loadState.append) {
+                                is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(32.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                is LoadState.Error -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "Ошибка загрузки. Нажмите для повтора",
+                                                modifier = Modifier.clickable {
+                                                    countries.retry()
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                                else -> {}
+                            }
+                        }
+                    }
+                    
+                    // Show refresh indicator at the top if refreshing in background
+                    if (uiState.isRefreshing && countries.itemCount > 0) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.TopCenter)
+                        )
                     }
                 }
             }
-            is Result.Error -> ErrorView(message = result.exception.message ?: "Ошибка")
-            is Result.Empty -> EmptyView()
         }
     }
 }
@@ -108,4 +188,3 @@ fun CountryItem(
         }
     }
 }
-

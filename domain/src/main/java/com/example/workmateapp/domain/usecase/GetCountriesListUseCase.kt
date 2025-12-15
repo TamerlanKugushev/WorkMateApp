@@ -1,5 +1,6 @@
 package com.example.workmateapp.domain.usecase
 
+import androidx.paging.PagingData
 import com.example.workmateapp.domain.model.Country
 import com.example.workmateapp.domain.repository.CountriesRepository
 import kotlinx.coroutines.flow.Flow
@@ -10,6 +11,12 @@ class GetCountriesListUseCase @Inject constructor(
 ) {
     operator fun invoke(): Flow<List<Country>> = repository.getCountries()
     
+    fun getCountriesPaged(): Flow<PagingData<Country>> = repository.getCountriesPaged()
+    
     suspend fun refresh() = repository.refreshCountries()
+    
+    suspend fun refreshIfStale() = repository.refreshCountriesIfStale()
+    
+    suspend fun hasCache() = repository.hasCache()
 }
 

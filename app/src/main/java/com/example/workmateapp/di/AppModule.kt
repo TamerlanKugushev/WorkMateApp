@@ -1,18 +1,24 @@
 package com.example.workmateapp.di
 
 import android.content.Context
+import com.example.workmateapp.core.database.di.DaggerDatabaseComponent
 import com.example.workmateapp.core.database.di.DatabaseComponent
 import com.example.workmateapp.core.database.di.DatabaseModule
+import com.example.workmateapp.core.network.di.DaggerNetworkComponent
 import com.example.workmateapp.core.network.di.NetworkComponent
 import com.example.workmateapp.core.network.di.NetworkModule
+import com.example.workmateapp.data.di.DaggerDataComponent
 import com.example.workmateapp.data.di.DataComponent
 import com.example.workmateapp.data.di.DataModule
+import com.example.workmateapp.domain.di.DaggerDomainComponent
 import com.example.workmateapp.domain.di.DomainComponent
 import com.example.workmateapp.domain.di.DomainModule
-import com.example.workmateapp.feature.countrieslist.di.CountriesListComponent
 import com.example.workmateapp.feature.countrieslist.di.CountriesListModule
-import com.example.workmateapp.feature.countrydetails.di.CountryDetailsComponent
+import com.example.workmateapp.feature.countrieslist.di.DaggerCountriesListComponent
+import com.example.workmateapp.feature.countrieslist.ui.CountriesListViewModelFactory
 import com.example.workmateapp.feature.countrydetails.di.CountryDetailsModule
+import com.example.workmateapp.feature.countrydetails.di.DaggerCountryDetailsComponent
+import com.example.workmateapp.feature.countrydetails.ui.CountryDetailsViewModelFactory
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -47,7 +53,7 @@ class AppModule(private val context: Context) {
         databaseComponent: DatabaseComponent
     ): DataComponent {
         return DaggerDataComponent.builder()
-            .dataModule(DataModule(networkComponent, databaseComponent))
+            .dataModule(DataModule(context, networkComponent, databaseComponent))
             .build()
     }
     
@@ -62,23 +68,27 @@ class AppModule(private val context: Context) {
     }
     
     @Provides
-    fun provideCountriesListComponent(
+    @Singleton
+    fun provideCountriesListViewModelFactory(
         domainComponent: DomainComponent
-    ): CountriesListComponent {
+    ): CountriesListViewModelFactory {
         return DaggerCountriesListComponent.builder()
             .domainComponent(domainComponent)
             .countriesListModule(CountriesListModule())
             .build()
+            .countriesListViewModelFactory()
     }
     
     @Provides
-    fun provideCountryDetailsComponent(
+    @Singleton
+    fun provideCountryDetailsViewModelFactory(
         domainComponent: DomainComponent
-    ): CountryDetailsComponent {
+    ): CountryDetailsViewModelFactory {
         return DaggerCountryDetailsComponent.builder()
             .domainComponent(domainComponent)
             .countryDetailsModule(CountryDetailsModule())
             .build()
+            .countryDetailsViewModelFactory()
     }
 }
 
